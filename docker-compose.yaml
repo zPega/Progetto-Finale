@@ -1,0 +1,106 @@
+services:
+  database:
+    image: mariadb:10.6
+    container_name: mariadb_db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: 'root_password'
+      MARIADB_DATABASE: 'final_project_db'
+      MARIADB_USER: 'user'
+      MARIADB_PASSWORD: 'user_password'
+    volumes:
+      # Monta la cartella che contiene lo script di inizializzazione
+      - ./mariadb/mariadb_init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - app_network
+
+  ollama:
+    build:
+      # Usa la cartella principale come contesto di build
+      context: ./ollama
+      dockerfile: Dockerfile
+    image: custom-ollama
+    container_name: ollama_service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app_network
+    healthcheck:
+       test: ["CMD", "curl", "-f", "http://localhost:11434"]
+       interval: 5s
+       timeout: 2s
+       retries: 10
+    environment:
+      OLLAMA_KEEP_ALIVE: "5m"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: backend_service
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_HOST: mariadb_db
+      DATABASE_USER: user
+      DATABASE_PASSWORD: user_password
+      DATABASE_NAME: final_project_db
+      OLLAMA_HOST: ollama 
+      OLLAMA_REQUEST_TIMEOUT: "60"
+    depends_on:
+      - database
+      - ollama
+    restart: on-failure
+    networks:
+      - app_network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_service
+    ports:
+      # Porta 8080 del tuo PC mappata sulla porta 8004 del container
+      - "8080:8004"
+    environment:
+      BACKEND_URL: http://backend_service:8003
+    depends_on:
+      - backend
+    restart: on-failure
+    networks:
+      - app_network
+
+  tester:
+    build:
+      context: ./backend
+      target: test
+    container_name: tester_service
+    environment:
+      DATABASE_HOST: mariadb_db
+      DATABASE_USER: user
+      DATABASE_PASSWORD: user_password
+      DATABASE_NAME: final_project_db
+      OLLAMA_HOST: ollama
+    depends_on:
+      - database
+      - ollama
+    command: ["pytest", "-v"]
+    networks:
+      - app_network
+
+
+networks:
+  app_network:
+    driver: bridge
+
+
+volumes:
+  ollama_data:
+    name: progetto-finale-ollama-data

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab ING-INF - Progetto Finale</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Natural Language to SQL Translator</h1>
+            <p>Interroga il database cinematografico usando linguaggio naturale</p>
+        </header>
+
+        <!-- Error Display -->
+        {% if error %}
+        <div class="card error-card">
+            <h2>Errore</h2>
+            <div class="error-content">
+                <p>{{ error }}</p>
+                {% if error_detail %}
+                <details>
+                    <summary>Dettagli errore</summary>
+                    <pre>{{ error_detail | tojson(indent=2) }}</pre>
+                </details>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Results Display -->
+        {% if results %}
+        <div class="card results-card">
+            <div class="results-header">
+                <h2>Risultati</h2>
+                <span class="result-count">{{ results|length }} record trovati</span>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            {% for column in results[0].keys() %}
+                            <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                        <tr>
+                            {% for value in row.values() %}
+                            <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <details class="raw-results">
+                <summary>Dati grezzi</summary>
+                <pre>{{ results | tojson(indent=2) }}</pre>
+            </details>
+        </div>
+        {% endif %}
+
+        <!-- Database Schema -->
+        <div class="card">
+            <h2>Schema del Database</h2>
+            <p>Visualizza la struttura delle tabelle del database</p>
+            <form action="/" method="post">
+                <input type="hidden" name="action" value="schema_summary">
+                <button type="submit">Mostra Schema</button>
+            </form>
+        </div>
+
+        <!-- Natural Language Search -->
+        <div class="card">
+            <h2>Cerca con Linguaggio Naturale</h2>
+            <p>Esempi:
+                <span class="example">"Film di Christopher Nolan"</span>,
+                <span class="example">"Attori nati dopo il 1990"</span>
+            </p>
+            <form action="/" method="post">
+                <input type="hidden" name="action" value="search">
+                <div class="form-group">
+                    <label for="question">La tua domanda:</label>
+                    <input type="text" id="question" name="question" required
+                        placeholder="Inserisci la tua domanda in italiano...">
+                </div>
+                <button type="submit">Traduci ed Esegui</button>
+            </form>
+        </div>
+
+        <!-- Direct SQL Query -->
+        <div class="card">
+            <h2>Esegui Query SQL</h2>
+            <p class="warning">⚠️ Solo query SELECT sono permesse</p>
+            <form action="/" method="post">
+                <input type="hidden" name="action" value="sql_search">
+                <div class="form-group">
+                    <label for="sql_query">Query SQL:</label>
+                    <textarea id="sql_query" name="sql_query" rows="4" required
+                        placeholder="SELECT titolo, anno FROM film WHERE regista = 'Christopher Nolan';"></textarea>
+                </div>
+                <button type="submit">Esegui SQL</button>
+            </form>
+        </div>
+
+        <!-- Add Data -->
+        <div class="card">
+            <h2>Aggiungi Dati</h2>
+            <p>Formato: Titolo,Regista,Età,Anno,Genere,Piattaforma...</p>
+            <form action="/" method="post">
+                <input type="hidden" name="action" value="add">
+                <div class="form-group">
+                    <label for="data_line">Inserisci dati:</label>
+                    <input type="text" id="data_line" name="data_line" required
+                        placeholder="Inception,Christopher Nolan,51,2010,Sci-Fi,Netflix">
+                </div>
+                <button type="submit">Aggiungi al Database</button>
+            </form>
+        </div>
+
+        <footer>
+            <p>Progetto Finale - Laboratorio di Ingegneria Informatica &copy; {{ current_year }}</p>
+        </footer>
+    </div>
+</body>
+
+</html>

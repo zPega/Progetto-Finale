@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = "Backend service for the text-to-sql application"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.111.0"
+uvicorn = "^0.29.0"
+mariadb = "^1.1.9"
+requests = "^2.31.0"
+python-dotenv = "^1.0.1"
+pydantic-settings = "^2.2.1"
+# Aggiungi tenacity qui
+tenacity = "^8.2.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
